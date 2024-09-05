@@ -84,20 +84,37 @@ print(head(asia,5)) # table of the data to get a view of it
 ```
 
 ```{r}
-# hill climbing with score = bde for Baysian drichlet equivalent 
+# hill climbing with score = bde for Baysian drichlet equivalent(uniform) 
 # iss for imaginary sample size
-set.seed(12345) # seed to get same results
+# 10 random restarts
+#set.seed(12345) # seed to get same results
 
-r1 <- hc(asia,restart = 10 ,score='bde', iss=5)
+# 2 different runs
+r1 <- hc(asia,restart = 5 ,score='bde', iss=5)
+r2 <- hc(asia,restart = 5 ,score='bde', iss=5)
 
-r2 <- hc(asia,restart = 10 ,score='bde', iss=5)
+dag1 <- cpdag(r1) # finding class and v structure
+dag2 <- cpdag(r2)
 
+# plotting grpahs
 par(mfrow= c(1,2))
-plot(cpdag(r1))
-plot(cpdag(r2))
+graphviz.plot(dag1, main='First run', shape='circle')
+graphviz.plot(dag2, main='Second run', shape='circle')
 ```
 
-Hill climbing algorithm is a greedy search that relies on the initial conditions, which means that different starting positions will most likely lead to different local optimas. And that's why the algorithm produces non identical structures
+
+```{r}
+
+arc1 <- arcs(dag1) # extracting arcs
+arc2 <- arcs(dag2)
+
+# checking if they are equal 
+all.equal(dag1,dag2)
+vstructs(dag2)
+```
+
+
+Hill climbing algorithm is a greedy search that relies on the initial conditions and the random restarts, which means that different starting positions will most likely lead to different local optimas. And that's why the algorithm produces non identical structures
 
 # Question 2
 
