@@ -1,5 +1,5 @@
 ---
-title: "LAB 2:: HIDDEN MARKOV MODELS"
+title: "LAB 2: HIDDEN MARKOV MODELS"
 date: "`r Sys.Date()`"
 author: "Johannes Hedström"
 output:
@@ -68,7 +68,7 @@ library(knitr)
 ```
 
 
-# Description
+**Description**
 
 The purpose of the lab is to put in practice some of the concepts covered in the lectures.
 To do so, you are asked to model the behavior of a robot that walks around a ring. The ring is
@@ -125,6 +125,10 @@ for (i  in 1:10) { # filling the matrix with probabilities, each row sums to 1
 
 hmm <-initHMM(states,sym, startprobs,transProbs=t_prob,e_prob)
 
+rownames(t_prob) <- sym
+colnames(t_prob) <- states
+rownames(e_prob) <- sym
+colnames(e_prob) <- states
 knitr::kable(t_prob, caption='Transitions probabilities')
 ```
 
@@ -156,7 +160,32 @@ knitr::kable(sim_obs[1:10],caption='First ten simulated observations')
 Discard the hidden states from the sample obtained above. Use the remaining observations to compute the filtered and smoothed probability distributions for each of the
 100 time points. Compute also the most probable path.
 
+
+$$
+\text { Filtering: } p\left(z^t \mid x^{0: t}\right)=\frac{\alpha\left(z^t\right)}{\sum_{z^t} \alpha\left(z^t\right)}
+$$
+
+
+$$
+\text { Smoothing: } p\left(z^t \mid x^{0: T}\right)=\frac{\alpha\left(z^t\right) \beta\left(z^t\right)}{\sum_{z^t} \alpha\left(z^t\right) \beta\left(z^t\right)}
+$$
+
+
+
 ```{r}
+# probabilities are given on the logaritmic scale and must therefore be transformed
+# with exp
+# forward for filter
+filt_pd <- exp(forward(hmm,sim_obs))
+
+# backwards for smoothed
+# alpha*beta/ sum over states alpha*beta
+beta <- exp(backward(hmm, sim_obs))
+smooth_pd <-  (filt_pd*beta)/colSums(filt_pd*beta)
+
+# Viterbi algorithm for the most likely path
+most_prob_path <- viterbi(hmm,sim_obs)
+
 
 ```
 
@@ -173,12 +202,80 @@ which.max to find out the most probable states. Finally, recall that you can com
 two vectors A and B element wise as A==B, and that the function table will count the
 number of times that the different elements in a vector occur in the vector
 
+```{r}
+# picking out the highest probability from the filter pd
+filt_path <- as.character(unname(apply(prop.table(filt_pd,2),2,which.max)))
+
+# picking out the highest probability from the smoothed pd
+smooth_path <-  as.character(unname(apply(prop.table(smooth_pd,2),2,which.max)))
+
+# number of correct devided by total(100
+acc_f <- sum(filt_path==sim_state)/100
+acc_s <- sum(smooth_path==sim_state)/100
+acc_mpp <- sum(most_prob_path==sim_state)/100
+
+# dataframe with the accuracy
+df_acc <- data.frame('Filter'=acc_f, 'Smoothed'=acc_s, 'Viterbi' = acc_mpp)
+
+knitr::kable(df_acc, caption='the filtered and smoothed probability distributions ')
+
+```
+
+
 # Question 5
 
 Repeat the previous exercise with different simulated samples. In general, the smoothed
 distributions should be more accurate than the filtered distributions. Why ? In general,
 the smoothed distributions should be more accurate than the most probable paths, too.
 Why ?
+
+```{r}
+# a function to run simulation, filer, smooth etc
+# returns a dataframe with the accuracy for each probabilitie distribution
+# and the most probable path
+hmm_sims <- function(nr_of_sims){
+  
+  sims <- simHMM(hmm,nr_of_sims) # simulate 100 steps
+  sim_obs <- sims$observation
+  sim_state <- sims$states
+  
+  filt_pd <- exp(forward(hmm,sim_obs))
+  # backwards for smoothed
+  beta <- exp(backward(hmm, sim_obs))
+  # alpha*beta/ sum over states alpha*beta
+  smooth_pd <-  (filt_pd*beta)/colSums(filt_pd*beta)
+
+  # Viterbi algorithm for the most likely path
+  most_prob_path <- viterbi(hmm,sim_obs)
+  
+  # picking out the highest probability from the filter pd
+  filt_path <- as.character(unname(apply(prop.table(filt_pd,2),2,which.max)))
+  # picking out the highest probability from the smoothed pd
+  smooth_path <-  as.character(unname(apply(prop.table(smooth_pd,2),2,which.max)))
+
+  # number of correct devided by total(100
+  acc_f <- sum(filt_path==sim_state)/100
+  acc_s <- sum(smooth_path==sim_state)/100
+  acc_mpp <- sum(most_prob_path==sim_state)/100
+  
+  # craeting a dataframe with each accuracy
+  df_acc <- data.frame('Filter'=acc_f, 'Smoothed'=acc_s, 'Viterbi' = acc_mpp)
+  df_acc # returning the dataframe
+}
+
+rownames(df_acc) <-paste0('Simulation: ',1) 
+# running the simulation 5 times and saving the results in the dataframe from before
+for(i in 2:5){
+  
+  df_acc <- rbind(df_acc,hmm_sims(100))
+  rownames(df_acc)[i] <-paste0('Simulation: ',i) 
+}
+
+knitr::kable(df_acc, )
+
+```
+
+
 
 # Question 6
 
