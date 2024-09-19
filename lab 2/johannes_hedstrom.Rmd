@@ -110,16 +110,13 @@ e_prob <- matrix(0,nrow=10, ncol=10) # empty matrix
 
 for (i  in 1:10) { # filling the matrix with probabilities, each row sums to 1
   j <- (i-2):(i+2)
-  if(11 %in% j){ # if we are going over 10 then go back to 1 and upwards
+  
+  # if we are going over 10 then go back to 1 and upwards
+    j[j>10] <- j[j>10] - 10    
+  
+  # if we are getting a value under 1 then go from 10 and downwards
+    j[j<1] <- j[j<1] + 10  
     
-    j_1 <-j[1:which(j==10)]   
-    j <- c(1:(length(j) - length(j_1)),j_1) 
-    }
-  if(0 %in% j){ # if we are getting a value under 1 then go from 10 and downwards
-    j_1 <-j[which(j==1):length(j)]   
-    j <- c((10-(length(j) - length(j_1))+1):10,j_1)
-    
-  }
   e_prob[i,j] <- 1/5
 }
 
@@ -179,10 +176,9 @@ $$
 filt_pd <- exp(forward(hmm,sim_obs))
 
 # backwards for smoothed
-# alpha*beta/ sum over states alpha*beta
+# alpha*beta/ sum of each columns to make them proportional
 beta <- exp(backward(hmm, sim_obs))
 smooth_pd <-  (filt_pd*beta)/colSums(filt_pd*beta)
-
 # Viterbi algorithm for the most likely path
 most_prob_path <- viterbi(hmm,sim_obs)
 
@@ -202,12 +198,13 @@ which.max to find out the most probable states. Finally, recall that you can com
 two vectors A and B element wise as A==B, and that the function table will count the
 number of times that the different elements in a vector occur in the vector
 
+
 ```{r}
 # picking out the highest probability from the filter pd
 filt_path <- as.character(unname(apply(prop.table(filt_pd,2),2,which.max)))
 
 # picking out the highest probability from the smoothed pd
-smooth_path <-  as.character(unname(apply(prop.table(smooth_pd,2),2,which.max)))
+smooth_path <-  as.character(unname(apply(smooth_pd,2,which.max)))
 
 # number of correct devided by total(100
 acc_f <- sum(filt_path==sim_state)/100
@@ -217,7 +214,7 @@ acc_mpp <- sum(most_prob_path==sim_state)/100
 # dataframe with the accuracy
 df_acc <- data.frame('Filter'=acc_f, 'Smoothed'=acc_s, 'Viterbi' = acc_mpp)
 
-knitr::kable(df_acc, caption='the filtered and smoothed probability distributions ')
+knitr::kable(df_acc, caption='Percentage of true hidden states for each method ')
 
 ```
 
@@ -231,7 +228,7 @@ Why ?
 
 ```{r}
 # a function to run simulation, filer, smooth etc
-# returns a dataframe with the accuracy for each probabilitie distribution
+# returns a dataframe with the accuracy for each probability distribution
 # and the most probable path
 hmm_sims <- function(nr_of_sims){
   
@@ -265,15 +262,23 @@ hmm_sims <- function(nr_of_sims){
 
 rownames(df_acc) <-paste0('Simulation: ',1) 
 # running the simulation 5 times and saving the results in the dataframe from before
-for(i in 2:5){
+for(i in 2:20){
   
   df_acc <- rbind(df_acc,hmm_sims(100))
   rownames(df_acc)[i] <-paste0('Simulation: ',i) 
 }
 
-knitr::kable(df_acc, )
 
+knitr::kable(head(df_acc,5), caption='First 5 simulations')
 ```
+
+```{r}
+means <- t(colMeans(df_acc)) # mean for each column
+knitr::kable(means, caption='Mean accuracy for the distributions (20 simulations)')
+```
+
+The smoothed distribution provides the highest accuracy compared to other distributions. This is expected because the filtering distribution only uses information available up to time t for its estimate, whereas smoothing incorporates both the information up to t and all subsequent information. Essentially, smoothing uses all available evidence and operates offline, unlike filtering, which is an online process. The viterbi algorithm always choses the next possible step with the highest probability and not the next step with the highest probability, which when we have noisy data(a bad gps), might not be the best choice.
+
 
 
 
@@ -284,9 +289,24 @@ the better you know where the robot is ?
 Hint: You may want to compute the entropy of the filtered distributions with the function
 entropy.empirical of the package entropy.
 
+```{r}
+library(entropy)
+apply(X=smooth_pd, MARGIN=2, FUN=entropy.empirical)
+apply(X=filt_pd, MARGIN=2, FUN=entropy.empirical)
+```
+
+
 # Question 7
 
 Consider any of the samples above of length 100. Compute the probabilities of the
 hidden states for the time step 101.
 
+```{r}
+# smoothed probs for step 101
+step101 <-smooth_pd[,100] %*% t_prob
 
+knitr::kable(step101, caption='Probabilities for step 101')
+
+```
+ 
+The most likely state for step 101 is state 3 for the smoothed distribution.
