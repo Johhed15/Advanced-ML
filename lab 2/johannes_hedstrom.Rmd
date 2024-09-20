@@ -61,7 +61,7 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning=FALSE, fig.width = 5
 
 
 ```{r}
-
+library(entropy)
 library(HMM)
 library(knitr)
 
@@ -290,11 +290,16 @@ Hint: You may want to compute the entropy of the filtered distributions with the
 entropy.empirical of the package entropy.
 
 ```{r}
-library(entropy)
-apply(X=smooth_pd, MARGIN=2, FUN=entropy.empirical)
-apply(X=filt_pd, MARGIN=2, FUN=entropy.empirical)
+# entropy for smooth_dp
+ent_sm <- apply(X=smooth_pd, MARGIN=2, FUN=entropy.empirical)
+# entropy for filter_pd
+ent_f <- apply(X=filt_pd, MARGIN=2, FUN=entropy.empirical)
+
+ent_sm
+ent_f
 ```
 
+The empirical entropy estimator is the maximum likelihood estimator, that is very inefficient and strongly biased when the sample size is small. 
 
 # Question 7
 
