@@ -61,6 +61,7 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning=FALSE, fig.width = 5
 
 
 ```{r}
+set.seed(12345)
 library(entropy)
 library(HMM)
 library(knitr)
@@ -173,12 +174,12 @@ $$
 # probabilities are given on the logaritmic scale and must therefore be transformed
 # with exp
 # forward for filter
-filt_pd <- exp(forward(hmm,sim_obs))
+alpha <- exp(forward(hmm,sim_obs))
 
 # backwards for smoothed
 # alpha*beta/ sum of each columns to make them proportional
 beta <- exp(backward(hmm, sim_obs))
-smooth_pd <-  (filt_pd*beta)/colSums(filt_pd*beta)
+smooth_pd <-  (alpha*beta)
 # Viterbi algorithm for the most likely path
 most_prob_path <- viterbi(hmm,sim_obs)
 
@@ -201,10 +202,10 @@ number of times that the different elements in a vector occur in the vector
 
 ```{r}
 # picking out the highest probability from the filter pd
-filt_path <- as.character(unname(apply(prop.table(filt_pd,2),2,which.max)))
+filt_path <- as.character(unname(apply(prop.table(alpha,2),2,which.max)))
 
 # picking out the highest probability from the smoothed pd
-smooth_path <-  as.character(unname(apply(smooth_pd,2,which.max)))
+smooth_path <-  as.character(unname(apply(prop.table(smooth_pd,2),2,which.max)))
 
 # number of correct devided by total(100
 acc_f <- sum(filt_path==sim_state)/100
@@ -236,17 +237,17 @@ hmm_sims <- function(nr_of_sims){
   sim_obs <- sims$observation
   sim_state <- sims$states
   
-  filt_pd <- exp(forward(hmm,sim_obs))
+  alpha <- exp(forward(hmm,sim_obs))
   # backwards for smoothed
   beta <- exp(backward(hmm, sim_obs))
   # alpha*beta/ sum over states alpha*beta
-  smooth_pd <-  (filt_pd*beta)/colSums(filt_pd*beta)
+  smooth_pd <-  (alpha*beta)
 
   # Viterbi algorithm for the most likely path
   most_prob_path <- viterbi(hmm,sim_obs)
   
   # picking out the highest probability from the filter pd
-  filt_path <- as.character(unname(apply(prop.table(filt_pd,2),2,which.max)))
+  filt_path <- as.character(unname(apply(prop.table(alpha,2),2,which.max)))
   # picking out the highest probability from the smoothed pd
   smooth_path <-  as.character(unname(apply(prop.table(smooth_pd,2),2,which.max)))
 
@@ -277,7 +278,9 @@ means <- t(colMeans(df_acc)) # mean for each column
 knitr::kable(means, caption='Mean accuracy for the distributions (20 simulations)')
 ```
 
-The smoothed distribution provides the highest accuracy compared to other distributions. This is expected because the filtering distribution only uses information available up to time t for its estimate, whereas smoothing incorporates both the information up to t and all subsequent information. Essentially, smoothing uses all available evidence and operates offline, unlike filtering, which is an online process. The viterbi algorithm always choses the next possible step with the highest probability and not the next step with the highest probability, which when we have noisy data(a bad gps), might not be the best choice.
+The smoothed distribution provides the highest accuracy compared to other distributions. This is expected because the filtering distribution only uses information available up to time t for its estimate, whereas smoothing incorporates both the information up to t and all subsequent information. Essentially, smoothing uses all available evidence and operates offline, unlike filtering, which is an online process.
+
+The viterbi algorithm always chooses the next possible step with the highest probability and not the next step with the highest probability when you account for uncertainties, which the data have lots of as the gps is bad. 
 
 
 
@@ -290,16 +293,21 @@ Hint: You may want to compute the entropy of the filtered distributions with the
 entropy.empirical of the package entropy.
 
 ```{r}
-# entropy for smooth_dp
-ent_sm <- apply(X=smooth_pd, MARGIN=2, FUN=entropy.empirical)
+# entropy for smooth_norm
+ent_sm <- apply(X=(alpha*beta)/colSums(alpha*beta), MARGIN=2, FUN=entropy.empirical)
 # entropy for filter_pd
-ent_f <- apply(X=filt_pd, MARGIN=2, FUN=entropy.empirical)
+ent_f <- apply(X=prop.table(alpha,2), MARGIN=2, FUN=entropy.empirical)
 
-ent_sm
-ent_f
+
+plot(y=ent_f, x=1:100, type='l',col='red',ylab='Entropy', xlab='Time')
+lines(y=ent_sm,x=1:100, col='blue' )
 ```
 
-The empirical entropy estimator is the maximum likelihood estimator, that is very inefficient and strongly biased when the sample size is small. 
+Entropy values can be interpreted as how certain we are of the prediction, a value of 0 means that we are 100% sure about the next step. We can see that entropy for the smooth distribution(Blue line) have lower values than for the filtered(Red line), meaning we are more certain of the predictions from that distribution.
+
+There is no clear trend over time, even though we get some entropy values as 0 around time 60 and time 85, but other than those 2 valleys we seem to have close to the same pattern as in the beginning.  
+
+
 
 # Question 7
 
@@ -308,10 +316,15 @@ hidden states for the time step 101.
 
 ```{r}
 # smoothed probs for step 101
-step101 <-smooth_pd[,100] %*% t_prob
+step101 <-((alpha*beta)/colSums(alpha*beta))[,100] %*% t_prob
+
+step101<-t(step101)# rotating 
+rownames(step101) <- sym
 
 knitr::kable(step101, caption='Probabilities for step 101')
+
 
 ```
  
 The most likely state for step 101 is state 3 for the smoothed distribution.
+
