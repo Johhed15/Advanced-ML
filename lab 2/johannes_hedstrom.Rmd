@@ -280,7 +280,7 @@ knitr::kable(means, caption='Mean accuracy for the distributions (20 simulations
 
 The smoothed distribution provides the highest accuracy compared to other distributions. This is expected because the filtering distribution only uses information available up to time t for its estimate, whereas smoothing incorporates both the information up to t and all subsequent information. Essentially, smoothing uses all available evidence and operates offline, unlike filtering, which is an online process.
 
-The viterbi algorithm always chooses the next possible step with the highest probability and not the next step with the highest probability when you account for uncertainties, which the data have lots of as the gps is bad. 
+The viterbi algorithm always chooses the most probable path, not the next most probable step, which mean that it can chose steps with lower probability within the whole path. 
 
 
 
