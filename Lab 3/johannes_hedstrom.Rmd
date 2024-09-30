@@ -210,16 +210,7 @@ EpsilonGreedyPolicy <- function(x, y, epsilon){
 
 ```{r}
 
-H <- 5
-W <- 7
 
-reward_map <- matrix(0, nrow = H, ncol = W)
-reward_map[3,6] <- 10
-reward_map[2:4,3] <- -1
-
-q_table <- array(0,dim = c(H,W,4))
-
-vis_environment()
 
 q_learning <- function(start_state, epsilon = 0.5, alpha = 0.1, gamma = 0.95, 
                        beta = 0){
@@ -307,17 +298,10 @@ our are requested to carry out the following tasks.
 
 * Run 10000 episodes of Q-learning with $\epsilon$ = 0.5, $\beta$ = 0, $\alpha$ = 0.1 and $\gamma$ = 0.95. To do so, simply run the code provided in the file RL Lab1.R. The code visualizes the Q-table and a greedy policy derived from it after episodes 10, 100, 1000 and 10000. Answer the following questions:
 
-    – What has the agent learned after the first 10 episodes ?
-
-    – Is the final greedy policy (after 10000 episodes) optimal for all states, i.e. not only for the initial state ? Why / Why not ? 
-
-    – Do the learned values in the Q-table reflect the fact that there are multiple paths (above and below the negative rewards) to get to the positive reward ? If not, what could be done to make it happen ?
-
-
 
 ```{r}
 # Environment A (learning)
-
+set.seed(12345)
 H <- 5
 W <- 7
 
@@ -337,6 +321,18 @@ for(i in 1:10000){
 }
 
 ```
+    – What has the agent learned after the first 10 episodes ?
+    
+After the first 10 episodes the agent havent learned that much, but it has updated the three boxes left of (-1) to not move to the right. 
+
+    – Is the final greedy policy (after 10000 episodes) optimal for all states, i.e. not only for the initial state ? Why / Why not ? 
+
+The final greedy policy isnt optimal for all states, for example the box below the obsticle(-1) is moving to up and not to the and sometimes it wants us to move out of the world/map. Or it could be something with the plot, as the values seem to be correct but not the arrows. 
+
+
+    – Do the learned values in the Q-table reflect the fact that there are multiple paths (above and below the negative rewards) to get to the positive reward ? If not, what could be done to make it happen ?
+
+The values are higher to go above the negative rewards, what could be done is to explore more when choosing the next action. 
 
 
 # 3 
@@ -407,6 +403,32 @@ for(j in c(0.5,0.75,0.95)){
 }
 ```
 
+## Epsilon= 0.5, alpha=0.1, gamma=0.5, beta=0
+
+High values for the moving average reward, correction gets close to zero around 5k episodes. Q table only gives reward close to 5 or 10.
+
+
+## Epsilon= 0.5, alpha=0.1, gamma=0.75, beta=0
+
+The results looks to be close as for gamma = 0.5, the difference is that the moving average reward grows more linear and earlier.  
+
+## Epsilon= 0.5, alpha=0.1, gamma=0.95, beta=0
+
+It takes much longer to get high average reward as to the previous two. We can see that in the Q-table we have much higher values on more places as they are taking in future rewards more with a high gamma. The first episodes correct much more and for the previous two. 
+
+## Epsilon= 0.1, alpha=0.1, gamma=0.5, beta=0
+
+If we compare this to the one with epsilon = 0.5 and gamma = 0.5 we see that we don't learn that much and that we are not improving when looking at the moving average reward. 
+
+## Epsilon= 0.1, alpha=0.1, gamma=0.75, beta=0
+
+We havent explored that much but we move to 10 easier than with gamma =0.5.
+
+## Epsilon= 0.1, alpha=0.1, gamma=0.95, beta=0
+
+Even though epsilon = 0.1(low exploration), we have high values for most of the states, which is because we consider long term reward highly. 
+The same results as before with gamma = 0.95, we correct much more in the first episodes.
+
 
 
 # 4
@@ -440,6 +462,9 @@ for(j in c(0,0.2,0.4,0.66)){
   vis_environment(i, gamma = 0.6, beta = j)
 }
 ```
+
+With higher probability(higher beta) to slip to left or right when starting in position (1,1) the agent have a problem to explore and learn the optimal path to the wanted state.
+
 
 
 # 5 
@@ -481,6 +506,7 @@ are broken at random). Finally, answer the following questions:
 * Could you have used the Q-learning algorithm to solve this task ?
 
 
+The policy looks okay/decent, most of the time it finds the goal, but not every time. 
 
 
 # 7 
