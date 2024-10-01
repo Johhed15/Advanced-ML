@@ -1,5 +1,5 @@
 # Advanced-ML
-Labs from Advanced Machine Learning course
+Labs from a Advanced Machine Learning course
 
 
 ## LAB 1
