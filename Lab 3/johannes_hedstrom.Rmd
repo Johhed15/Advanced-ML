@@ -469,6 +469,9 @@ With higher probability(higher beta) to slip to left or right when starting in p
 
 # 5 
 
+[Link to José's jupyter NB](https://github.com/STIMALiU/AdvMLCourse/blob/master/ReinforcementLearning/RL_Lab2_Colab.ipynb)
+
+
 The file RL Lab2 Colab.ipynb in the course website contains an implementation of the REINFORCE algorithm. The file also contains the result of running the code,
 so that you do not have to run it. So, you do not need to run it if you do not want.1 Your task is
 to study the code and the results obtained, and answer some questions.
@@ -492,8 +495,7 @@ the reward function.
 
 
 Environment D. In this task, we will use eight goal positions for training and, then, validate the learned policy on the remaining eight possible goal positions. The training and validation goal positions are stored in the lists train goals and val goals in the code in the
-file RL Lab2 Colab.ipynb. The results provided in the file correspond to running the REIN-
-FORCE algorithm for 5000 episodes with $\beta$ = 0 and $\gamma$ = 0.95. Each training episode uses a
+file RL Lab2 Colab.ipynb. The results provided in the file correspond to running the REINFORCE algorithm for 5000 episodes with $\beta$ = 0 and $\gamma$ = 0.95. Each training episode uses a
 random goal position from train goals. The initial position for the episode is also chosen
 at random. When training is completed, the code validates the learned policy for the goal positions in val goals. This is done by with the help of the function vis prob, which shows
 the grid, goal position and learned policy. Note that each non-terminal tile has four values.
@@ -501,14 +503,37 @@ These represent the action probabilities associated to the tile (state). Note al
 terminal tile has an arrow. This indicates the action with the largest probability for the tile (ties
 are broken at random). Finally, answer the following questions:
 
+\newpage
 * Has the agent learned a good policy? Why / Why not ?
+
+
+```{r ,fig.cap='Example before training'}
+knitr::include_graphics('pic1.png')
+```
+
+
+
+```{r, fig.cap='Example after training'}
+knitr::include_graphics('pic2.png')
+```
+
+
+The policy looks okay/decent, most of the time it finds the goal, but not every time so its not optimal. 
+
+
 
 * Could you have used the Q-learning algorithm to solve this task ?
 
 
-The policy looks okay/decent, most of the time it finds the goal, but not every time. 
 
 
+
+Q-learning would have problems as its saving action values in the Q-table, and this would take time to converge or create storage space problems. Unless you represent it as a parameterized function and does deep Q-learning, which advantages such as fewer parameters which removes the storage problem and generalization to unvisited states! So when using it in that way Q-learning could work. 
+
+
+
+
+\newpage
 # 7 
 
 
@@ -519,7 +544,11 @@ questions:
 
 * Has the agent learned a good policy? Why / Why not ?
 
+The agent has not learned a good policy as its only trained to go to the row 4, all the policies whant the agent to move up. 
+
 * If the results obtained for environments D and E differ, explain why
+
+The agents differ as the first one has trained on each row and each column 2 times each so it has learnt to explore much of the world. But the second one has only learnt from goals in one row making it having problems to find goals on other rows, unless the starting position is below the goal. 
 
 
 
