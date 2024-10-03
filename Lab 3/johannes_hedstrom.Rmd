@@ -57,8 +57,7 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning=FALSE, fig.width = 5
 ```
 
 ```{r}
-# install.packages("ggplot2")
-# install.packages("vctrs")
+
 library(knitr)
 library(ggplot2)
 ```
@@ -329,12 +328,11 @@ After the first 10 episodes the agent havent learned that much, but it has updat
 
     – Is the final greedy policy (after 10000 episodes) optimal for all states, i.e. not only for the initial state ? Why / Why not ? 
 
-The final greedy policy isnt optimal for all states, for example the box below the obsticle(-1) is moving to up and not to the and sometimes it wants us to move out of the world/map. Or it could be something with the plot, as the values seem to be correct but not the arrows. 
-
+The final greedy policy isnt optimal for all states, its choosing a longer path to go over the obstacle then below, even though that the path below is shorter.
 
     – Do the learned values in the Q-table reflect the fact that there are multiple paths (above and below the negative rewards) to get to the positive reward ? If not, what could be done to make it happen ?
 
-The values are higher to go above the negative rewards, what could be done is to explore more when choosing the next action. 
+The values are higher to go above the negative rewards, what could be done is to explore more when choosing the next action, seems like the left bottom corner isnt explored ehough. 
 
 
 # 3 
@@ -407,29 +405,29 @@ for(j in c(0.5,0.75,0.95)){
 
 ## Epsilon= 0.5, alpha=0.1, gamma=0.5, beta=0
 
-High values for the moving average reward, correction gets close to zero around 5k episodes. Q table only gives reward close to 5 or 10.
+High values for the moving average reward, correction gets close to zero around 5k episodes. Q table only gives reward to states close to 5 or 10. Most of the paths lead to 5. 
 
 
 ## Epsilon= 0.5, alpha=0.1, gamma=0.75, beta=0
 
-The results looks to be close as for gamma = 0.5, the difference is that the moving average reward grows more linear and earlier.  
+The results looks to be close as for gamma = 0.5, two more states lead to 10 than previous. 
 
 ## Epsilon= 0.5, alpha=0.1, gamma=0.95, beta=0
 
-It takes much longer to get high average reward as to the previous two. We can see that in the Q-table we have much higher values on more places as they are taking in future rewards more with a high gamma. The first episodes correct much more and for the previous two. 
+We are now avoiding the 5 to get the higher reward in 10, gamma of 0.95 is making the agent to look for long term rewards(10) rather than short term(5). Maybe this is learnt around 15k episodes as there is a big correction there and the average reward goes up at the same time.
 
 ## Epsilon= 0.1, alpha=0.1, gamma=0.5, beta=0
 
-If we compare this to the one with epsilon = 0.5 and gamma = 0.5 we see that we don't learn that much and that we are not improving when looking at the moving average reward. 
+If we compare this to the one with epsilon = 0.5 and gamma = 0.5 we see that we don't learn that much and that we are not improving when looking at the moving average reward, the agent found out how to get to 5 then stuck by that. That is what can happen when epsilon is low and you use the best known path 90% of the time. 
 
 ## Epsilon= 0.1, alpha=0.1, gamma=0.75, beta=0
 
-We havent explored that much but we move to 10 easier than with gamma =0.5.
+We havent explored that much but we move to 10 easier than with gamma =0.5 and epsilon 0.1.
 
 ## Epsilon= 0.1, alpha=0.1, gamma=0.95, beta=0
 
-Even though epsilon = 0.1(low exploration), we have high values for most of the states, which is because we consider long term reward highly. 
-The same results as before with gamma = 0.95, we correct much more in the first episodes.
+The same as before with epsilon =0.1, we dont expolore thath much, we can se that all the values on the right side of 5 is 0 in the Q-table.
+So even if the agent looks for long term reward, the low exploration makes it to go to 5 instead of 10. 
 
 
 
@@ -465,7 +463,7 @@ for(j in c(0,0.2,0.4,0.66)){
 }
 ```
 
-With higher probability(higher beta) to slip to left or right when starting in position (1,1) the agent have a problem to explore and learn the optimal path to the wanted state.
+With higher probability(higher beta) to slip to left or right when starting in position (1,1) the agent has a problem to explore and learn the optimal path to the wanted state.
 
 
 
