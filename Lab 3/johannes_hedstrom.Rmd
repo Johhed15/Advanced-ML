@@ -52,7 +52,7 @@ header-includes:
 \setcounter{page}{1}
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning=FALSE, fig.width = 5, fig.height = 3, fig.align = 'center')
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning=FALSE, fig.width = 6, fig.height = 4, fig.align = 'center')
 
 ```
 
@@ -124,11 +124,11 @@ vis_environment <- function(iterations=0, epsilon = 0.5, alpha = 0.1, gamma = 0.
   print(ggplot(df,aes(x = y,y = x)) +
           scale_fill_gradient(low = "white", high = "green", na.value = "red", name = "") +
           geom_tile(aes(fill=val6)) +
-          geom_text(aes(label = val1),size = 4,nudge_y = .35,na.rm = TRUE) +
-          geom_text(aes(label = val2),size = 4,nudge_x = .35,na.rm = TRUE) +
-          geom_text(aes(label = val3),size = 4,nudge_y = -.35,na.rm = TRUE) +
-          geom_text(aes(label = val4),size = 4,nudge_x = -.35,na.rm = TRUE) +
-          geom_text(aes(label = val5),size = 10) +
+          geom_text(aes(label = val1),size = 2.5,nudge_y = .35,na.rm = TRUE) +
+          geom_text(aes(label = val2),size = 2.5,nudge_x = .35,na.rm = TRUE) +
+          geom_text(aes(label = val3),size = 2.5,nudge_y = -.35,na.rm = TRUE) +
+          geom_text(aes(label = val4),size = 2.5,nudge_x = -.35,na.rm = TRUE) +
+          geom_text(aes(label = val5),size = 7.5) +
           geom_tile(fill = 'transparent', colour = 'black') + 
           ggtitle(paste("Q-table after ",iterations," iterations\n",
                         "(epsilon = ",epsilon,", alpha = ",alpha,"gamma = ",gamma,", beta = ",beta,")")) +
@@ -182,7 +182,7 @@ GreedyPolicy <- function(x, y){
   max_actions <- which(q_table[x,y,]==max(q_table[x,y,])) # picking out all max values
  
   max_actions[sample(seq_along(max_actions),1)]# Random if two actions are equally good in the table
-
+  #sample(max_actions,1) Why does this choose 1 more often?!
   }
 
 # Epsilon greedy function
@@ -207,6 +207,8 @@ EpsilonGreedyPolicy <- function(x, y, epsilon){
   
 }
 ```
+
+
 
 
 ```{r}
@@ -250,9 +252,9 @@ q_learning <- function(start_state, epsilon = 0.5, alpha = 0.1, gamma = 0.95,
     
 
     # correction
-    corr <-(alpha*(reward + gamma *max(q_table[new_pos[1],new_pos[2],])-q_table[x,y,action] ))
+    corr <-(reward + gamma *max(q_table[new_pos[1],new_pos[2],])-q_table[x,y,action] )
     # Q-table update.
-    q_table[x,y,action] <<- q_table[x,y,action] + corr
+    q_table[x,y,action] <<- q_table[x,y,action] + alpha*corr
     # sum of corrections
     episode_correction <- c(episode_correction , corr)
     x <- new_pos[1]
