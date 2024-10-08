@@ -60,6 +60,8 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning=FALSE, fig.width = 6
 
 library(knitr)
 library(ggplot2)
+library("mvtnorm")
+library(ggplot2)
 ```
 
 
@@ -98,8 +100,156 @@ knitr::kable(t(df))
 
 ```
 
-(5) Repeat (4), this time with hyperparameters σf = 1 and ` = 1. Compare the results.
+(5) Repeat (4), this time with hyperparameters $\sigma _f$ = 1 and $l$ = 1. Compare the results.
 
+
+## 1
+
+```{r}
+
+
+# Covariance function from joses code
+SquaredExpKernel <- function(x1,x2,sigmaF=1,l=3){
+  n1 <- length(x1)
+  n2 <- length(x2)
+  K <- matrix(NA,n1,n2)
+  for (i in 1:n2){
+    K[,i] <- sigmaF^2*exp(-0.5*( (x1-x2[i])/l)^2 )
+  }
+  return(K)
+}
+
+
+posteriorGP <- function(x,y,XStar,sigmaNoise,k,l=3, sigmaF=1){
+  
+  #2 Cholesky on K(X,X) // Transpose to get lower triangle
+  K <- k(x,x,sigmaF,l)
+  L <- t( chol(K+ diag(sigmaNoise^2,nrow(K))))
+  
+  #4 Solving out a
+  a <- solve(t(L),solve(L,y))
+  
+  # predictive mean
+  f_star <- t(k(x,XStar,sigmaF,l)) %*% a
+  
+  #6 Solving v
+  v <- solve(L,k(x,XStar,sigmaF,l))
+  
+  # Predictive variance
+  Var_f <- k(XStar,XStar,sigmaF,l) - t(v) %*% v
+  
+  #8 # diag to ge the variances
+  return(list('f'=f_star,'Var'=diag(Var_f)))
+  
+}
+
+
+```
+
+
+## 2 
+
+
+```{r}
+# setting our values
+x1 = 0.4 
+y1 = 0.719
+k=SquaredExpKernel
+l=0.3
+sigmaNoise <- 0.1
+XStar <- seq(-1,1,by=0.01)# grid from -1 to 1
+
+# running the function
+GP <- posteriorGP(x1,y1,XStar,sigmaNoise,k=SquaredExpKernel,l=l)
+
+# data frame with the values so its easier to plot
+GP_df <- data.frame('f'=GP$f,'upper'=GP$f+1.96*sqrt(GP$Var),
+                    'lower'=GP$f-1.96*sqrt(GP$Var),'X'=XStar )
+
+# plot
+ggplot(GP_df, aes(x=X, y=f)) + geom_line() + 
+  geom_ribbon(aes(min=lower,max=upper), alpha=0.4, fill='green', color='black', linetype='dashed')+
+  theme_bw() + ggtitle('Posterior mean of f over the interval x in [−1, 1]')
+
+
+```
+
+
+
+## 3
+
+```{r}
+x1 = c(0.4 ,-0.6)
+y1 = c(0.719,-0.044)
+k=SquaredExpKernel
+l=0.3
+sigmaNoise <- 0.1
+XStar <- seq(-1,1,by=0.01)# grid from -1 to 1
+
+# running the function
+GP <- posteriorGP(x1,y1,XStar,sigmaNoise,k=SquaredExpKernel,l=l)
+
+# data frame with the values so its easier to plot
+GP_df <- data.frame('f'=GP$f,'upper'=GP$f+1.96*sqrt(GP$Var),
+                    'lower'=GP$f-1.96*sqrt(GP$Var),'X'=XStar )
+
+# plot
+ggplot(GP_df, aes(x=X, y=f)) + geom_line() + 
+  geom_ribbon(aes(min=lower,max=upper), alpha=0.4, fill='green', color='black', linetype='dashed')+
+  theme_bw() + ggtitle('Posterior mean of f over the interval x in [−1, 1]')
+
+
+
+```
+
+
+## 4
+
+```{r}
+x=c(-1.0, -0.6, -0.2, 0.4, 0.8)
+y=c( 0.768 ,-0.044, -0.940, 0.719, -0.664)
+
+df <- data.frame(x,y)
+k=SquaredExpKernel
+l=0.3
+sigmaNoise <- 0.1
+XStar <- seq(-1,1,by=0.01)# grid from -1 to 1
+
+# running the function
+GP <- posteriorGP(df[,1],df[,2],XStar,sigmaNoise,k=SquaredExpKernel,l=l)
+
+# data frame with the values so its easier to plot
+GP_df <- data.frame('f'=GP$f,'upper'=GP$f+1.96*sqrt(GP$Var),
+                    'lower'=GP$f-1.96*sqrt(GP$Var),'X'=XStar )
+
+# plot
+ggplot(GP_df, aes(x=X, y=f)) + geom_line() + 
+  geom_ribbon(aes(min=lower,max=upper), alpha=0.4, fill='green', color='black', linetype='dashed')+
+  theme_bw() + ggtitle('Posterior mean of f over the interval x in [−1, 1]')
+
+
+```
+
+## 5 
+
+```{r}
+l=1
+sigmaNoise <- 0.1
+XStar <- seq(-1,1,by=0.01)# grid from -1 to 1
+
+# running the function
+GP <- posteriorGP(df[,1],df[,2],XStar,sigmaNoise,k=SquaredExpKernel,l=l)
+
+# data frame with the values so its easier to plot
+GP_df <- data.frame('f'=GP$f,'upper'=GP$f+1.96*sqrt(GP$Var),
+                    'lower'=GP$f-1.96*sqrt(GP$Var),'X'=XStar )
+
+# plot
+ggplot(GP_df, aes(x=X, y=f)) + geom_line() + 
+  geom_ribbon(aes(min=lower,max=upper), alpha=0.4, fill='green', color='black', linetype='dashed')+
+  theme_bw() + ggtitle('Posterior mean of f over the interval x in [−1, 1]')
+
+```
 
 
 # 2 GP Regression with kernlab. 
