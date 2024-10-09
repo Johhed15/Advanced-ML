@@ -62,6 +62,8 @@ library(knitr)
 library(ggplot2)
 library("mvtnorm")
 library(ggplot2)
+library(lubridate)
+library(kernlab)
 ```
 
 
@@ -83,7 +85,7 @@ Here is what you need to do:
   * sigmaNoise: Noise standard deviation σn.
   * k: Covariance function or kernel. That is, the kernel should be a separate function (see the file GaussianProcesses.R on the course web page).
   
-* (2) Now, let the prior hyperparameters be $\sigma_n$ = 1 and $l$ = 0.3. Update this prior with a single observation: (x, y) = (0.4, 0.719). Assume that $\sigma_n$ = 0.1. Plot the posterior mean of f over the interval x $\in$ [−1, 1]. Plot also 95 % probability (pointwise) bands for f.
+* (2) Now, let the prior hyperparameters be $\sigma_n$ = 1 and $\ell$ = 0.3. Update this prior with a single observation: (x, y) = (0.4, 0.719). Assume that $\sigma_n$ = 0.1. Plot the posterior mean of f over the interval x $\in$ [−1, 1]. Plot also 95 % probability (pointwise) bands for f.
 
 * (3) Update your posterior from (2) with another observation: (x, y) = (−0.6,−0.044). Plot the posterior mean of f over the interval x $\in$ [−1, 1]. Plot also 95 % probability (pointwise) bands for f. Hint: Updating the posterior after one observation with a new observation gives the same result as updating the prior directly with the two observations.
 
@@ -100,7 +102,7 @@ knitr::kable(t(df))
 
 ```
 
-(5) Repeat (4), this time with hyperparameters $\sigma _f$ = 1 and $l$ = 1. Compare the results.
+(5) Repeat (4), this time with hyperparameters $\sigma _f$ = 1 and $\ell$ = 1. Compare the results.
 
 
 ## 1
@@ -265,7 +267,60 @@ since the start of each year (i.e., day= 1, 2, . . ., 365, 1, 2, . . ., 365). Es
 observations can take some time on slower computers, so let us subsample the data and use
 only every fifth observation. This means that your time and day variables are now time= 1, 6,
 11, . . ., 2186 and day= 1, 6, 11, . . ., 361, 1, 6, 11, . . ., 361.
-* (1) Familiarize yourself with the functions gausspr and kernelMatrix in kernlab. Do ?gausspr and read the input arguments and the output. Also, go through the file 3 KernLabDemo.R available on the course website. You will need to understand it. Now, define your own square exponential kernel function (with parameters $l$(ell) and $\sigma_f$ (sigmaf)), evaluate it in the point x = 1, x′ = 2, and use the kernelMatrix function to compute the covariance matrix K(X, X∗) for the input vectors $X = (1, 3, 4)^T$ and $X_* = (2,3,4)^T$.
+* (1) Familiarize yourself with the functions gausspr and kernelMatrix in kernlab. Do ?gausspr and read the input arguments and the output. Also, go through the file 3 KernLabDemo.R available on the course website. You will need to understand it. Now, define your own square exponential kernel function (with parameters $\ell$(ell) and $\sigma_f$ (sigmaf)), evaluate it in the point x = 1, x′ = 2, and use the kernelMatrix function to compute the covariance matrix K(X, X∗) for the input vectors $X = (1, 3, 4)^T$ and $X_* = (2,3,4)^T$.
+
+
+
+```{r}
+
+tempdata <- read.csv("https://github.com/STIMALiU/AdvMLCourse/raw/master/GaussianProcess/Code/TempTullinge.csv", header=TRUE, sep=";")
+
+time <- 1:nrow(tempdata) # time variable
+
+day <- rep(1:365,2190/265) # creating the day variable
+
+fifth_index <- seq(1,length(day),5) # index to chose every fifth value
+
+time <- time[fifth_index]
+day <- day[fifth_index]
+
+```
+
+```{r}
+
+# function that returns a kernel function
+# so we can evaluate the kernal at inputs
+
+sekf <- function(sigmaF,ell){
+  
+  # The kernel from previous task
+  SquaredExpKernel <- function(x1,x2){
+    n1 <- length(x1)
+    n2 <- length(x2)
+    K <- matrix(NA,n1,n2)
+    for (i in 1:n2){
+        K[,i] <- sigmaF^2*exp(-0.5*( (x1-x2[i])/ell)^2 )
+      }
+    return(K)
+  }
+  
+  class(SquaredExpKernel) <- "kernel" # class to kernel as kernlab expects this
+  return(SquaredExpKernel)
+} 
+
+
+evalkernel <- sekf(1,2) # sigmaF = 1 and ell = 2 
+evalkernel(1,2) # eval x=1, x*=2
+
+X <- c(1, 3, 4) # X 
+X_star <- c(2,3,4) # X_Star
+
+covm <- kernelMatrix(evalkernel,X,X_star) # Covariance (X,X*)
+
+knitr::kable(covm, caption='Covariance matrix for (X,X*)')
+
+```
+
 
 * (2) Consider the following model:
 
@@ -273,27 +328,55 @@ $$temp = f(time) +\epsilon \text{ with } \epsilon \sim N(0,\sigma^2_n) \text{ an
 
 let $\sigma^2_n$ be the residual variance from a simple quadratic regression fit (using the lm
 function in R). Estimate the above Gaussian process regression model using the gausspr
-function with the squared exponential function from (1) with $\sigma_f$= 20 and $l$ = 100 (use
-the option scaled=FALSE in the gausspr function, otherwise these σf and ` values
+function with the squared exponential function from (1) with $\sigma_f$= 20 and $\ell$ = 100 (use
+the option scaled=FALSE in the gausspr function, otherwise these $\sigma_f$ and $\ell$ values
 are not suitable). Use the predict function in R to compute the posterior mean at every data point in the training dataset. Make a scatterplot of the data and superimpose
 the posterior mean of f as a curve (use type="l" in the plot function). Plot also the
-95 % probability (pointwise) bands for f. Play around with different values on $\sigma_f$ and $l$
+95 % probability (pointwise) bands for f. Play around with different values on $\sigma_f$ and $\ell$
 (no need to write this in the report though).
 
+
+```{r}
+# Getting the residuals from simple quadratic model
+residuals <- lm(tempdata$temp ~ time+ I(time**2))$residuals
+
+GPfit <- gausspr(time,tempdata$temp,kernel=sekf(20,100),scaled=FALSE,var = var(residuals), variance.model = TRUE)
+
+meanPred <- predict(GPfit, time)
+plot(time,tempdata$temp)
+lines(time, meanPred, col="red", lwd = 2)
+lines(time, meanPred+1.96*predict(GPfit,time, type="sdeviation"),col="blue")
+lines(time, meanPred-1.96*predict(GPfit,time, type="sdeviation"),col="blue")
+```
+
+
 * (3) Repeat the previous exercise, but now use Algorithm 2.1 on page 19 of Rasmussen and Willams’ book to compute the posterior mean and variance of f.
+
+
+```{r}
+
+```
+
 * (4) Consider now the following model:
 
 $$temp = f(day) +\epsilon \text{ with } \epsilon \sim N(0,\sigma^2_n) \text{ and } f\sim GP(0,k(day,day^´))$$
 
 
+
 Estimate the model using the gausspr function with the squared exponential function
-from (1) with $\sigma_f$ = 20 and $l$ = 100 (use the option scaled=FALSE in the gausspr
-function, otherwise these $\sigma_f$ and $l$ values are not suitable). Superimpose the posterior
+from (1) with $\sigma_f$ = 20 and $\ell$ = 100 (use the option scaled=FALSE in the gausspr
+function, otherwise these $\sigma_f$ and $\ell$ values are not suitable). Superimpose the posterior
 mean from this model on the posterior mean from the model in (2). Note that this plot
 should also have the time variable on the horizontal axis. Compare the results of both
 models. What are the pros and cons of each model?
-(5) Finally, implement the following extension of the squared exponential kernel with a
-periodic kernel (a.k.a. locally periodic kernel):
+
+
+```{r}
+
+```
+
+
+* (5) Finally, implement the following extension of the squared exponential kernel with a periodic kernel (a.k.a. locally periodic kernel):
 
 
 $$ k\left(x, x^{\prime}\right)=\sigma_f^2 \exp \left\{-\frac{2 \sin ^2\left(\pi\left|x-x^{\prime}\right| / d\right)}{\ell_1^2}\right\} \exp \left\{-\frac{1}{2} \frac{\left|x-x^{\prime}\right|^2}{\ell_2^2}\right\} $$
@@ -303,7 +386,7 @@ correlation between two days in the same year, and $l_2$ controls the correlatio
 the same day in different years. Estimate the GP model using the time variable with this
 kernel and hyperparameters $\sigma_f$ = 20, $l_1$ = 1, $l_2$ = 100 and d = 365. Use the gausspr
 function with the option scaled=FALSE, otherwise these σf , $l_1$ and $l_2$ values are not
-suitable. Compare the fit to the previous two models (with $\sigma_f$ = 20 and $l$ = 100). Discuss
+suitable. Compare the fit to the previous two models (with $\sigma_f$ = 20 and $\ell$ = 100). Discuss
 the results.
 
 
