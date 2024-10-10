@@ -52,7 +52,7 @@ header-includes:
 \setcounter{page}{1}
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning=FALSE, fig.width = 6, fig.height = 4, fig.align = 'center')
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning=FALSE,  out.width = "50%")
 
 ```
 
@@ -324,17 +324,19 @@ for(i in 1:10000){
 }
 
 ```
+
+
     – What has the agent learned after the first 10 episodes ?
     
-After the first 10 episodes the agent havent learned that much, but it has updated the three boxes left of (-1) to not move to the right. 
+After the first 10 episodes the agent haven't learned that much, but it has updated the three boxes left of (-1) to not move to the right. 
 
     – Is the final greedy policy (after 10000 episodes) optimal for all states, i.e. not only for the initial state ? Why / Why not ? 
 
-The final greedy policy isnt optimal for all states, its choosing a longer path to go over the obstacle then below, even though that the path below is shorter.
+The final greedy policy isn't optimal for all states, its choosing a longer path to go over the obstacle then below, even though that the path below is shorter.
 
     – Do the learned values in the Q-table reflect the fact that there are multiple paths (above and below the negative rewards) to get to the positive reward ? If not, what could be done to make it happen ?
 
-The values are higher to go above the negative rewards, what could be done is to explore more when choosing the next action, seems like the left bottom corner isnt explored ehough. 
+The values are higher to go above the negative rewards, what could be done is to explore more when choosing the next action, seems like the left bottom corner isn't explored enough. What could be done is to increase epsilon and to increase the number of episodes.
 
 
 # 3 
@@ -409,29 +411,29 @@ for(j in c(0.5,0.75,0.95)){
 
 High values for the moving average reward, correction gets close to zero around 5k episodes. Q table only gives reward to states close to 5 or 10. Most of the paths lead to 5. 
 
-
 ## Epsilon= 0.5, alpha=0.1, gamma=0.75, beta=0
 
 The results looks to be close as for gamma = 0.5, two more states lead to 10 than previous. 
 
 ## Epsilon= 0.5, alpha=0.1, gamma=0.95, beta=0
 
-We are now avoiding the 5 to get the higher reward in 10, gamma of 0.95 is making the agent to look for long term rewards(10) rather than short term(5). Maybe this is learnt around 15k episodes as there is a big correction there and the average reward goes up at the same time.
+We are now avoiding the 5 to get the higher reward in 10, gamma of 0.95 is making the agent to look for long term rewards(10) rather than short term(5) when starting at (4,1). Maybe this is learnt around 15k episodes as there is a big correction there and the average reward goes up at the same time. The agent have learned the optimal path to the reward of 10. 
 
 ## Epsilon= 0.1, alpha=0.1, gamma=0.5, beta=0
 
-If we compare this to the one with epsilon = 0.5 and gamma = 0.5 we see that we don't learn that much and that we are not improving when looking at the moving average reward, the agent found out how to get to 5 then stuck by that. That is what can happen when epsilon is low and you use the best known path 90% of the time. 
-
+If we compare this to the one with epsilon = 0.5 and gamma = 0.5 we see that we don't learn that much and that we are not improving when looking at the moving average reward, the agent found out how to get to 5 then stuck by that. That is what can happen when epsilon is low.
 ## Epsilon= 0.1, alpha=0.1, gamma=0.75, beta=0
 
-We havent explored that much but we move to 10 easier than with gamma =0.5 and epsilon 0.1.
+We haven't explored that much but we move to 10 easier than with gamma =0.5 and epsilon 0.1.
 
 ## Epsilon= 0.1, alpha=0.1, gamma=0.95, beta=0
 
-The same as before with epsilon =0.1, we dont expolore thath much, we can se that all the values on the right side of 5 is 0 in the Q-table.
+The same as before with epsilon =0.1, we don't explore that much, we can see that all the values on the right side of 5 is 0 in the Q-table.
 So even if the agent looks for long term reward, the low exploration makes it to go to 5 instead of 10. 
 
+To summarize this, a low epsilon makes the agent too greedy and it's not exploring the environment enough, when starting in (4,1) it finds paths to 5 but not 10. 
 
+A higher gamma makes the agent more likely to find the 10, and a gamma of 0.5 makes the agent discount future reward more heavily making it prefer short term rewards more instead. 
 
 # 4
 
@@ -465,8 +467,7 @@ for(j in c(0,0.2,0.4,0.66)){
 }
 ```
 
-With higher probability(higher beta) to slip to left or right when starting in position (1,1) the agent has a problem to explore and learn the optimal path to the wanted state.
-
+When beta is 0 the policy is deterministic and optimal for all states to find the goal. When beta then increases the environment becomes more random as beta is the probability to slip either right or left. So the optimal policy to find the goal for beta = 0 might not be the same for higher betas as the agent has to account for the probability of slipping. A shorter path to the goal but close to negative rewards could then lead to lower expected discounted reward because of this risk. It starts to get obvious for beta = 0.4 as the policy is more cautious, avoiding edges close to the negative rewards. For 0.6 it has almost started to prioritize getting away from the negative rewards over than getting to the goal.
 
 
 # 5 
@@ -520,17 +521,15 @@ knitr::include_graphics('pic2.png')
 ```
 
 
-The policy looks okay/decent, most of the time it finds the goal, but not every time so its not optimal. 
+The policy looks okay/decent, most of the time it finds the goal, but not every state is optimal. 
 
+But in general its a good policy as we have learnt to generalize the model, as its able to find goals its not trained on.  
 
 
 * Could you have used the Q-learning algorithm to solve this task ?
 
 
-
-
-
-Q-learning would have problems as its saving action values in the Q-table, and this would take time to converge or create storage space problems. Unless you represent it as a parameterized function and does deep Q-learning, which advantages such as fewer parameters which removes the storage problem and generalization to unvisited states! So when using it in that way Q-learning could work. 
+Q-learning would have problems as its saving action values in the Q-table, and this would take time to converge or create storage space problems. Q-learning would also have a problem to generalize to new data.
 
 
 
@@ -546,11 +545,11 @@ questions:
 
 * Has the agent learned a good policy? Why / Why not ?
 
-The agent has not learned a good policy as its only trained to go to the row 4, all the policies whant the agent to move up. 
+The agent hasn't learned a good policy, we are trying to generalize the model but have only trained on data from the same row(4). We need to have a good sample of training data that can represent the environment. 
 
 * If the results obtained for environments D and E differ, explain why
 
-The agents differ as the first one has trained on each row and each column 2 times each so it has learnt to explore much of the world. But the second one has only learnt from goals in one row making it having problems to find goals on other rows, unless the starting position is below the goal. 
+The agents differ as the first one has trained on each row and each column 2 times each so it has learnt to explore much of the world. But the second one has only learnt from goals in one row making it having problems to generalize to the whole environment. 
 
 
 
