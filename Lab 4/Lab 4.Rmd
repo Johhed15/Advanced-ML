@@ -52,7 +52,7 @@ header-includes:
 \setcounter{page}{1}
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning=FALSE, fig.width = 6, fig.height = 4, fig.align = 'center')
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning=FALSE,  out.width = "50%")
 
 ```
 
@@ -336,11 +336,12 @@ the posterior mean of f as a curve (use type="l" in the plot function). Plot als
 # Getting the residuals from simple quadratic model
 residuals <- lm(tempdata$temp[fifth_index] ~ time + I(time**2))$residuals
 
-GPfit <- gausspr(time,tempdata$temp[fifth_index],kernel=sekf(20,100),scaled=FALSE,var = var(residuals), variance.model = TRUE)
+GPfit <- gausspr(time,tempdata$temp[fifth_index],kernel=sekf(20,100),
+                 scaled=FALSE,var = var(residuals), variance.model = TRUE)
 
 meanPred <- predict(GPfit, time)
 plot(time,tempdata$temp[fifth_index])
-lines(time, meanPred, col="red", lwd = 2)
+lines(time, meanPred, col="red", lwd = 4)
 lines(time, meanPred+1.96*predict(GPfit,time, type="sdeviation"),col="blue")
 lines(time, meanPred-1.96*predict(GPfit,time, type="sdeviation"),col="blue")
 ```
@@ -353,8 +354,14 @@ lines(time, meanPred-1.96*predict(GPfit,time, type="sdeviation"),col="blue")
 
 
 
-posteriorGP(x=time,y=tempdata$temp[fifth_index],XStar=time,sigmaNoise =sd(residuals),k=SquaredExpKernel,l=100,sigmaF=20)
+gpfit <-posteriorGP(x=time,y=tempdata$temp[fifth_index],XStar=time,
+                    sigmaNoise =sd(residuals),k=SquaredExpKernel,l=100,sigmaF=20)
 
+
+plot(time,tempdata$temp[fifth_index])
+lines(time, gpfit$f, col="red", lwd = 4)
+lines(time, gpfit$f+1.96* sqrt(gpfit$Var),col="blue")
+lines(time,gpfit$f-1.96*sqrt(gpfit$Var),col="blue")
 
 ```
 
@@ -373,8 +380,19 @@ models. What are the pros and cons of each model?
 
 
 ```{r}
+# Getting the residuals from simple quadratic model
+residuals <- lm(tempdata$temp[fifth_index] ~ day + I(day**2))$residuals
 
+GPfit4 <- gausspr(day,tempdata$temp[fifth_index],kernel=sekf(20,100),
+                  scaled=FALSE,var = var(residuals), variance.model = TRUE)
+
+meanPred4 <- predict(GPfit4, day)
+plot(time,tempdata$temp[fifth_index])
+lines(time, meanPred4, col="yellow", lwd = 4)
+lines(time, meanPred,col="red",lwd = 2)
 ```
+
+It seems like the model that uses the days(yellow) have a early season that stays the same throughout the time period, the model that uses time as the variable instead changes the magnitude of the variance depending on time. 
 
 
 * (5) Finally, implement the following extension of the squared exponential kernel with a periodic kernel (a.k.a. locally periodic kernel):
@@ -390,6 +408,34 @@ function with the option scaled=FALSE, otherwise these σf , $l_1$ and $l_2$ val
 suitable. Compare the fit to the previous two models (with $\sigma_f$ = 20 and $\ell$ = 100). Discuss
 the results.
 
+```{r}
+lpk <- function(sigmaF,ell1, ell2){
+  
+  # The kernel from lab
+  sekpk <- function(x1,x2){
+      
+      r <- abs(x1-x2) # difference
+      
+    return( sigmaF^2*exp(-(2*sin((pi*r)/365)^2)/ell1 )*exp(-0.5*(r^2/ell2^2)))
+  }
+  
+  class(sekpk) <- "kernel" # class to kernel as kernlab expects this
+  return(sekpk)
+} 
+
+
+
+GPfit5 <- gausspr(time,tempdata$temp[fifth_index],kernel=lpk(20,1,100),
+                 scaled=FALSE,var = var(residuals), variance.model = TRUE)
+
+meanPred5 <- predict(GPfit5, time)
+plot(time,tempdata$temp[fifth_index])
+lines(time, meanPred5, col="green", lwd = 4)
+lines(time, meanPred, col="red", lwd = 2)
+lines(time, meanPred4, col="yellow", lwd = 2)
+```
+
+The model that uses the periodic kernel fits the data a bit better, showing less smoothing as its not as rounded as the other two, this is because of the added $\ell$ in the kernel, which is 1 for this model. 
 
 
 # 3 GP Regression with kernlab. 
