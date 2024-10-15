@@ -528,7 +528,7 @@ But in general its a good policy as we have learnt to generalize the model, as i
 
 * Could you have used the Q-learning algorithm to solve this task ?
 
-Q-learning would have a problem to generalize to new data. But if we were to go through with the the algorithm we would have problems as we need to add the goals positions in the Q-table, making it significantly increase in size, and this would make the algorithm take time to converge and create storage space problems. 
+Q-learning would have a problem to generalize to new data. But if we were to go through with the the algorithm we would have problems as we need to add all of the goal positions in the Q-table, making it significantly increase in size, and this would make the algorithm take time to converge and create storage space problems. This would make the algorithm "work", but its not generalizing as it would need to train on every possible goal. 
 
 
 
