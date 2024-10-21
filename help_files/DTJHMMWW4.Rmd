@@ -160,6 +160,7 @@ SquaredExpKernel <- function(x1,x2,sigmaF=1,l=3){
 posteriorGP <- function(X, y, XStar, sigmaNoise, k, sigmaF=1, l=3) {
   
   # 2
+  n <- length(y)
   K <- k(X, X, sigmaF = sigmaF, l = l)
   L <- t(chol(K + sigmaNoise^2 * diag(nrow(K))))
   alpha <- solve(t(L), solve(L, y))
@@ -171,7 +172,7 @@ posteriorGP <- function(X, y, XStar, sigmaNoise, k, sigmaF=1, l=3) {
   
   # 6
   var_f_star <-  k(XStar, XStar, sigmaF = sigmaF, l = l) - (t(v) %*% v)
- 
+  #logmar <- -0.5*(t(y)%*%a)-sum(log(diag(L)))-(n/2)*log(2*pi)
   return(list("mean" = f_star, "var" = diag(var_f_star)))
   
 } 
