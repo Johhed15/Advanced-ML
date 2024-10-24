@@ -268,7 +268,7 @@ result <- posteriorGP(X = c(-1,-0.6,-0.2,0.4,0.8),
 ```
 
 
-```{r fig.align='center', fig.width=4.5, fig.height=2.5, echo=FALSE, fig.cap='Posterior distribution with l=0.3'}
+```{r fig.align='center', fig.width=4.5, fig.height=2.5, fig.cap='Posterior distribution with l=0.3'}
 
 points_df <- data.frame(
   x = c(-1, -0.6, -0.2, 0.4, 0.8),
