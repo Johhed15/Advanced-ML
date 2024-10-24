@@ -646,7 +646,7 @@ plot_data <- data.frame(
 ```
 
 
-```{r fig.align='center', fig.width=5.5, fig.height=5, warning=FALSE, echo=FALSE}
+```{r fig.align='center', fig.width=5.5, fig.height=5, warning=FALSE}
 
 ggplot(plot_data, aes(x = time)) +
   geom_point(aes(y = temp, color = "Data"), size = 1,alpha = 0.3) +
