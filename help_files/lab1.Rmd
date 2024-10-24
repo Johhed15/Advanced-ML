@@ -152,7 +152,7 @@ graphviz.plot(struct, main='HC', shape='circle')
 ```{r}
 
 fit_1 <- bn.fit(struct, train, method='mle') # fitting the parameters with MLE
-
+                                            # change to bayes if quastion ask for bayes params values
 preds <- c()# empty vector
 fit_g <- as.grain(fit_1)
 fit_g <- compile(fit_g)
@@ -177,7 +177,7 @@ knitr::kable(cf, caption='Confusion matrix')
 
 ```{r}
 
-dag = model2network("[A][S][T|A][L|S][B|S][D|B:E][E|T:L][X|E]")
+dag = model2network("[A][S][T|A][L|S][B|S][D|B:E][E|T:L][X|E]") # true dag
 
 fit_1 <- bn.fit(dag, train, method='mle') # fitting the parameters with MLE
 
@@ -192,8 +192,8 @@ for(r in 1:nrow(test)){
   ev <- setEvidence(fit_g , nodes = colnames(test[-2]), states=as.vector(unlist(test[r,-2])))
 
   # marginal prob for S[r]
-  qg <- querygrain(ev,node='S', type='marginal')
-
+  qg <- querygrain(ev,node='S', type='marginal') # posterior distribution (remove type = marginal for that)
+ 
   # predicting S
   preds[r] <- ifelse(qg$S[1] > qg$S[2],'No','Yes')
 }
@@ -201,7 +201,10 @@ for(r in 1:nrow(test)){
 
 tb<- table(preds,test$S)/length(preds)
 knitr::kable(tb, caption='Confusion matrix')
+
 ```
+
+
 ```{r}
 
 graphviz.compare(struct,dag, shape='circle',main = c('First DAG','Difference between DAG and true DAG'))
@@ -310,6 +313,27 @@ cat('Naive bayes validation accuracy:',sum(diag(table(preds,test$S)/length(preds
 ```
 
 Worse classification results for Naive Bayes than with HC algorithm. 
+
+
+```{r}
+# another way of setting up the graph
+library(bnlearn)
+#library(gRain)
+
+#net <- model2network("[U][C|U][A|C][B|C][D|A:B][Ch|U][Ah|Ch][Bh|Ch][Dh|Ah:Bh]")
+#plot(net)
+
+# custom prob 
+#cptC <- matrix(c(.9,.1,.1,.9), nrow=2, ncol=2)
+#dim(cptC) <- c(2,2)
+#dimnames(cptC) <- list("C" = c("0", "1"), "U" =  c("0", "1"))
+
+#netfit <- custom.fit(net,list(U=cptU, C=cptC, A=cptA, B=cptB, D=cptD, Ch=cptCh, Ah=cptAh, Bh=cptBh, Dh=cptDh))
+#netcom <- compile(as.grain(netfit))
+
+#querygrain(setEvidence(netcom,nodes=c("D","Ah"),states=c("1","0")),c("Dh"))
+```
+
 
 
 # Question 5
